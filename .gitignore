@@ -1,0 +1,4 @@
+# Not tracking build artifacts because they need to be 
+# built from source to work on different systems
+**/debug/
+**/release/
