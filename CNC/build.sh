@@ -57,9 +57,9 @@ BUILD_TYPE="${1:-debug}"
 
 # Set output directory and build flags
 if [[ "$BUILD_TYPE" == "release" ]]; then
-    OUTDIR="$SCRIPT_DIR/release"
+    OUTDIR="$SCRIPT_DIR/bins/release"
 elif [[ "$BUILD_TYPE" == "debug" ]]; then
-    OUTDIR="$SCRIPT_DIR/debug"
+    OUTDIR="$SCRIPT_DIR/bins/debug"
 else
     echo -e "${RED}==================== ERROR ====================${RESET}"
     echo

