@@ -112,6 +112,8 @@ sudo apt-get install mysql-server
 sudo mysql -u root -p
 ```
 
+When asked, enter the MySQL root password you set during installation. If you didn't set a password, just press Enter or use your sudo password.
+
 Inside the MySQL shell, run:
 
 ```sql
@@ -133,6 +135,8 @@ Inside the MySQL shell, run:
 
 ```sql
 CREATE DATABASE mirai;
+
+USE mirai;
 
 CREATE TABLE `history` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
