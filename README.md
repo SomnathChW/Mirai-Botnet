@@ -6,9 +6,22 @@ The original Mirai code fails in isolated lab/testbench environments, so this re
 
 > ⚠️ **Note:** Deployment instructions and code examples are under development. Use this repository strictly for **learning and research purposes**, not for any malicious activity.
 
+## Quick Links
+
+-   [Requirements](#requirements)
+-   [Setup The Components](#setup-the-components)
+    -   [1. Private DNS (Raspberry Pi or Linux Device)](#1-private-dns-raspberry-pi-or-linux-device)
+    -   [2. CnC Server (1st PC or VM)](#2-cnc-server-1st-pc-or-vm)
+    -   [3. Loader, DLR, Nginx Server (2nd PC or VM)](#3-loader-dlr-nginx-server-2nd-pc-or-vm)
+-   [Deploying and Starting the Botnet](#deploying-and-starting-the-botnet)
+-   [Disclaimer](#disclaimer)
+
 ---
 
 ## Requirements
+
+<details>
+<summary>Click to See Requirements (Mandatory Read)</summary>
 
 -   1 PC or VM with **Linux(Ubuntu 24.04.2 LTS or later recommended)** This will be the **CnC server** (Command and Control server) for the botnet.
 
@@ -31,10 +44,39 @@ Note down all the IP addresses of the above devices as you will need them in the
 -   Use this template to note down the IP addresses of the devices:
 
 ```
-CnC Server IP: <IP_ADDRESS>
-Loader Server IP: <IP_ADDRESS>
-Private DNS Server IP: <IP_ADDRESS>
+1st PC or VM:
+    CnC Server IP: <IP_ADDRESS of 1st PC or VM>
+
+2nd PC or VM:
+    Loader Server IP: <IP_ADDRESS of 2nd PC or VM>
+
+Raspberry Pi or Linux Device:
+    Private DNS Server IP: <IP_ADDRESS of Raspberry Pi or Linux Device>
+
+# The values below will make sense once you move forward with the entire setup.
+
+1st PC or VM:
+    CNC Server Domain: cnc.mirai.local
+    CNC Server Port: 23
+
+    CnC Server MySQL Database Credentials:
+        Username: mirai
+        Password: password
+
+    CnC Login Credentials:
+        Username: mirai
+        Password: password
+
+2nd PC or VM:
+    Loader Server Domain: loader.mirai.local
+    ScanListener Port: 48101 (This might change if you change it while building the ScanListener)
+
+Raspberry Pi or Linux Device:
+    Pi-hole Password: <PASSWORD you set during Pihole installation>
+
 ```
+
+</details>
 
 ---
 
@@ -42,9 +84,12 @@ Private DNS Server IP: <IP_ADDRESS>
 
 > Please follow them in the order given below to ensure everything works correctly.
 
+<details>   
+<summary>Click to See Setup Steps (Mandatory Read)</summary>
+
 ### 1. Private DNS (Raspberry Pi or Linux Device)
 
--   Follow the instructions exactly in the [DNS Guide](Documentation/DNS.md) to set up the Private DNS server.
+-   Follow the instructions in the [DNS Guide](Documentation/DNS.md) to set up the Private DNS server.
 -   This is optional in case you are deploying in a public network but **MANDATORY** for isolated environments to resolve domain names for the bots.
 
 ### 2. CnC Server (1st PC or VM)
@@ -55,6 +100,8 @@ Private DNS Server IP: <IP_ADDRESS>
 
 -   Follow the instructions exactly in the [PC2 Guide](Documentation/PC2.md) to set up the Loader, DLR, and Nginx server.
 -   We will also use this PC to build our bot binaries and host them on the Nginx server.
+
+</details>
 
 ---
 

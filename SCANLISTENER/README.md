@@ -29,11 +29,13 @@ chmod +x build.sh
 ./build.sh <port>
 ```
 
--   Replace `<port>` with the port number you want the ScanListener to listen on. The default port is `48101` if no port is specified.
+-   It is not recommended to specify the port, but if you want to do so, make sure the port is between `12500` and `65535`. The default port is `48101` if no port is specified.
+
+-   If you specify a port, then note that down in the template present in the [Requirements](../README.md#requirements) section of the README file.
 
 ### 3. Verify the build:
 
-After running the build script, you should see a message indicating that the ScanListener has been built successfully. The binary will be located in the `bins` directory within the `Mirai-Botnet/SCANLISTENER` folder.
+After running the build script, you might not receive a message indicating that the ScanListener has been built successfully but to verify, the binary should be located in the `bins` directory within the `Mirai-Botnet/SCANLISTENER` folder.
 
 </details>
 
@@ -59,3 +61,9 @@ After running the build script, you should see a message indicating that the Sca
 > This section provides additional information about the ScanListener build process.
 
 -   Usually, you should not need to specify the port when running the build script, but if you decide to do so, make sure the port is between `12500` and `65535`. The default port is `48101`.
+
+-   Save the port number in the template you created in the [Requirements](../README.md#requirements) section of the README file if you specified a port.
+
+## Next Steps
+
+If you are following the guide in order then you can now move on to the PC2 guide mentioned in the [README](../README.md#setup-the-components) file to set up the Loader, DLR, and Nginx server on the Loader PC (2nd PC or VM).

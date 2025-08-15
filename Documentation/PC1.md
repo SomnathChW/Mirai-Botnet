@@ -8,12 +8,14 @@ This guide provides step-by-step instructions for setting up the first PC or VM 
 
 -   Make sure this PC has a proper **STATIC** IP address. This can be private or public, but it should not change. The **DNS server** IP address should also be set up if you are deploying in an isolated environment.
 
+> **Note:** You should have this DNS IP stored in the [Requirements](../README.md#requirements) section of the main README file.
+
 -   You can follow instructions from the internet to know how to put a static IP address and DNS resolver address for your Linux machine (PC1).
 
 ## Quick Links
 
 -   [Install Go](#installing-go-manual-method-recommended)
--   [Install MySQL](#installing-mysql)
+-   [Install and Setup MySQL](#installing-and-setting-up-mysql)
 -   [Next Steps](#next-steps)
 
 ---
@@ -90,7 +92,7 @@ go version go1.25.0 linux/amd64
 
 ---
 
-## Installing MySQL
+## Installing and Setting up MySQL
 
 > This section explains how to install MySQL, which is required for the CnC server to store bot and user data.
 
@@ -115,6 +117,8 @@ Inside the MySQL shell, run:
 ```sql
 CREATE USER 'mirai'@'localhost' IDENTIFIED BY 'password';
 ```
+
+> **Note:** This is the `CnC Server MySQL Database Credentials` shown in the [Requirements](../README.md#requirements) section of the README file.
 
 ### 3. Grant Permissions to the User
 
@@ -183,6 +187,8 @@ Default values are:
 
 -   Username: `mirai`
 -   Password: `password`
+
+> **Note:** This is the `CnC Login Credientials` shown in the [Requirements](../README.md#requirements) section of the README file.
 
 ### 6. Exit MySQL Shell
 
