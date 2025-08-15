@@ -2,7 +2,9 @@
 
 To set up a DNS server for your botnet infrastructure, we will use Pi-hole, a popular network-wide ad blocker and DNS server. This guide provides step-by-step instructions for setting up a **Pi-hole DNS server** in your local private network. Pi-hole will act as a DNS server, and we'll also configure custom domain mappings for your botnet infrastructure.
 
-> **Note:** It is not mandatory to use Pi-hole, but it is highly recommended for its ease of use and powerful features. You can also use other DNS server software like dnsmasq or BIND, but the setup will be more complex, change accordingly.
+> **Note:** It is not mandatory to use Pi-hole, but it is highly recommended for its ease of use and powerful features. You can also use other DNS server software like dnsmasq or BIND, but for simplicity, we will focus on Pi-hole.
+
+> **Note:** Configuring the Pi or Linux Machine as the DNS server is easier if using dnsmasq or BIND, but Pi-hole provides a user-friendly web interface and additional features like network monitoring, which might come in handy for analysis of the bot communications.
 
 ## Pre-requisites
 
@@ -115,53 +117,15 @@ In the admin interface:
 For adding custom domains that point to specific IP addresses in your network:
 
 1. Access the Pi-hole admin interface
-2. Go to **Local DNS** → **DNS Records**
-3. Add your custom domains:
+2. Go to **System** → **Settings** → **Local DNS Records**
+3. Add your custom domains in the list of Local DNS Records:
 
 **Configuration for Botnet Infrastructure:**
 
-| Domain             | IP Address                                                  |
-| ------------------ | ----------------------------------------------------------- |
-| `cnc.mirai.local`  | `<CNC_Server_IP>` from [Here](../README.md#requirements)    |
-| `scan.mirai.local` | `<LOADER_Server_IP>` from [Here](../README.md#requirements) |
-
-### Method 2: Using Custom Host Files
-
-Alternatively, you can edit the hosts file directly:
-
-```bash
-sudo nano /etc/hosts
-```
-
-Add your custom domains:
-
-```
-<CNC_Server_IP>    cnc.mirai.local
-<LOADER_Server_IP> scan.mirai.local
-```
-
-### Method 3: Using dnsmasq Configuration
-
-For more advanced configurations, edit the dnsmasq config:
-
-```bash
-sudo nano /etc/dnsmasq.d/02-custom.conf
-```
-
-Add domain mappings:
-
-```
-address=/cnc.mirai.local/<CNC_Server_IP>
-address=/scan.mirai.local/<LOADER_Server_IP>
-```
-
-Restart Pi-hole to apply changes:
-
-```bash
-sudo pihole restartdns
-```
-
----
+| Domain                                                                              | IP Address                                                  |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `cnc.mirai.local` (CnC Server Domain from [Here](../README.md#requirements) )       | `<CNC_Server_IP>` from [Here](../README.md#requirements)    |
+| `loader.mirai.local` (Loader Server Domain from [Here](../README.md#requirements) ) | `<LOADER_Server_IP>` from [Here](../README.md#requirements) |
 
 ## Configuring Network Devices
 
@@ -179,36 +143,67 @@ Configure your router to use Pi-hole as the primary DNS server:
 
 For individual devices, set DNS manually:
 
+> You have to set the DNS server IP address to the Pi-hole IP address in the network settings of each device (PC1, PC2, Raspberry Pi, etc.) that will be part of your network if you dont want to configure the router.
+
 **Linux:**
 
-```bash
-sudo nano /etc/systemd/resolved.conf
-```
+1. **GUI Method** (Recommended for desktop environments):
 
-Add:
+    - Open **Network Settings**.
+    - Select your connection (**Wired** or **Wireless**).
+    - Go to **IPv4 Settings**.
+    - Set the **DNS** field to your Pi-hole IP address.
+    - Save and reconnect.
 
-```
-[Resolve]
-DNS=<PI_HOLE_IP>
-FallbackDNS=8.8.8.8
-```
+2. **Command Line Method**:
 
-Restart the service:
+    - Edit the `/etc/resolv.conf` file:
 
-```bash
-sudo systemctl restart systemd-resolved
-```
+        ```bash
+        sudo nano /etc/resolv.conf
+        ```
+
+    - Add your Pi-hole IP address as a nameserver:
+
+        ```
+        nameserver <PI_HOLE_IP>
+        ```
+
+    - (Optional) Restart networking to apply changes:
+
+        ```bash
+        sudo systemctl restart networking
+        ```
+
+> **Note:** On some systems, `/etc/resolv.conf` may be overwritten by network managers. For persistent changes, configure your network manager or use `/etc/netplan/` or `/etc/network/interfaces` as appropriate for your distribution.
 
 ---
 
 ## Testing and Verification
 
-Test if your custom domains resolve correctly:
+### Testing and Verification
+
+To verify that your custom domains are resolving correctly through your Pi-hole DNS server:
+
+#### 1. Test from PC1
+
+Open a terminal and run:
 
 ```bash
-nslookup cnc.mirai.local <PI_HOLE_IP>
-nslookup scan.mirai.local <PI_HOLE_IP>
+ping loader.mirai.local
 ```
+
+#### 2. Test from PC2
+
+Open a terminal and run:
+
+```bash
+ping cnc.mirai.local
+```
+
+If the DNS is configured properly, each command should resolve the domain to the correct internal IP address you set in Pi-hole.
+
+> **Tip:** You can also use `nslookup` or `dig` for more detailed DNS query information.
 
 ## Next Steps
 
