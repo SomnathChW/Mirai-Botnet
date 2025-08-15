@@ -122,10 +122,10 @@ For adding custom domains that point to specific IP addresses in your network:
 
 **Configuration for Botnet Infrastructure:**
 
-| Domain                                                                              | IP Address                                                  |
-| ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `cnc.mirai.local` (CnC Server Domain from [Here](../README.md#requirements) )       | `<CNC_Server_IP>` from [Here](../README.md#requirements)    |
-| `loader.mirai.local` (Loader Server Domain from [Here](../README.md#requirements) ) | `<LOADER_Server_IP>` from [Here](../README.md#requirements) |
+| Domain                                                                            | IP Address                                                  |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `cnc.mirai.com` (CnC Server Domain from [Here](../README.md#requirements) )       | `<CNC_Server_IP>` from [Here](../README.md#requirements)    |
+| `loader.mirai.com` (Loader Server Domain from [Here](../README.md#requirements) ) | `<LOADER_Server_IP>` from [Here](../README.md#requirements) |
 
 ## Configuring Network Devices
 
@@ -190,7 +190,7 @@ To verify that your custom domains are resolving correctly through your Pi-hole 
 Open a terminal and run:
 
 ```bash
-ping loader.mirai.local
+ping loader.mirai.com
 ```
 
 #### 2. Test from PC2
@@ -198,7 +198,7 @@ ping loader.mirai.local
 Open a terminal and run:
 
 ```bash
-ping cnc.mirai.local
+ping cnc.mirai.com
 ```
 
 If the DNS is configured properly, each command should resolve the domain to the correct internal IP address you set in Pi-hole.

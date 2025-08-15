@@ -53,7 +53,7 @@ Raspberry Pi or Linux Device:
 # The values below will make sense once you move forward with the entire setup.
 
 1st PC or VM:
-    CNC Server Domain: cnc.mirai.local
+    CNC Server Domain: cnc.mirai.com
     CNC Server Port: 23
 
     CnC Server MySQL Database Credentials:
@@ -65,7 +65,7 @@ Raspberry Pi or Linux Device:
         Password: password
 
 2nd PC or VM:
-    Loader Server Domain: loader.mirai.local
+    Loader Server Domain: loader.mirai.com
     ScanListener Port: 48101 (This might change if you change it while building the ScanListener)
 
 Raspberry Pi or Linux Device:
