@@ -20,9 +20,6 @@ The original Mirai code fails in isolated lab/testbench environments, so this re
 
 ## Requirements
 
-<details>
-<summary>Click to See Requirements (Mandatory Read)</summary>
-
 -   1 PC or VM with **Linux(Ubuntu 24.04.2 LTS or later recommended)** This will be the **CnC server** (Command and Control server) for the botnet.
 
     > This Will be used as the CnC server to control the bots.
@@ -76,16 +73,11 @@ Raspberry Pi or Linux Device:
 
 ```
 
-</details>
-
 ---
 
 ## Setup The Components
 
 > Please follow them in the order given below to ensure everything works correctly.
-
-<details>   
-<summary>Click to See Setup Steps (Mandatory Read)</summary>
 
 ### 1. Private DNS (Raspberry Pi or Linux Device)
 
@@ -100,8 +92,6 @@ Raspberry Pi or Linux Device:
 
 -   Follow the instructions exactly in the [PC2 Guide](Documentation/PC2.md) to set up the Loader, DLR, and Nginx server.
 -   We will also use this PC to build our bot binaries and host them on the Nginx server.
-
-</details>
 
 ---
 
