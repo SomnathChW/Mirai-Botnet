@@ -40,7 +40,7 @@ function print_help {
     echo
     echo -e "${BOLD}Usage:${RESET} $0"
     echo
-    echo "Compiles src/enc.c into bins/encoder using gcc -std=c99."
+    echo "Compiles src/encoder.c into bins/encoder using gcc -std=c99."
     echo
     echo -e "${BOLD}Options:${RESET}"
     echo -e "  ${YELLOW}-h, --help${RESET}    Show this help message and exit"
@@ -60,6 +60,16 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 echo -e "${CYAN}==================== BUILD START ====================${RESET}"
+
+# =======================================
+# Check if gcc is installed
+# =======================================
+if ! command -v gcc >/dev/null 2>&1; then
+    echo -e "${RED}[!] gcc is not installed!${RESET}"
+    echo -e "${RED}[!] Please install gcc (e.g., 'sudo apt install build-essential' on Ubuntu).${RESET}"
+    echo -e "${RED}==================== BUILD ABORTED ====================${RESET}"
+    exit 1
+fi
 
 # =======================================
 # Check for source file
