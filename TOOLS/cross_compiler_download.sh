@@ -2,13 +2,13 @@
 set -e
 
 # =======================================
-# setup_cross_compilers.sh
+# cross_compiler_download.sh
 # Download, extract, and organize cross-compilers for Mirai botnet builds
-# Usage: sudo ./setup_cross_compilers.sh [all|compiler1 [compiler2 ...]]
-# Example: sudo ./setup_cross_compilers.sh i586 mips
+# Usage: sudo ./cross_compiler_download.sh [all|compiler1 [compiler2 ...]]
+# Example: sudo ./cross_compiler_download.sh i586 mips
 # =======================================
 
-## Color setup
+# Color setup
 if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
     RED="$(tput setaf 1)"
     GREEN="$(tput setaf 2)"
@@ -29,7 +29,6 @@ else
     RESET=""
 fi
 
-# Script Directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 function print_help {
@@ -39,23 +38,23 @@ function print_help {
     echo "Downloads, extracts, and organizes cross-compiler toolchains."
     echo
     echo -e "${BOLD}Arguments:${RESET}"
-    echo -e "  ${YELLOW}all${RESET}        Download and extract all compilers (default)"
-    echo -e "  ${YELLOW}i486${RESET}       Only process i486"
-    echo -e "  ${YELLOW}i586${RESET}       Only process i586"
-    echo -e "  ${YELLOW}i686${RESET}       Only process i686"
-    echo -e "  ${YELLOW}m68k${RESET}       Only process m68k"
-    echo -e "  ${YELLOW}mips${RESET}       Only process mips"
-    echo -e "  ${YELLOW}mipsel${RESET}     Only process mipsel"
-    echo -e "  ${YELLOW}powerpc${RESET}    Only process powerpc"
+    echo -e "  ${YELLOW}all${RESET}              Download and extract all compilers (default)"
+    echo -e "  ${YELLOW}i486${RESET}             Only process i486"
+    echo -e "  ${YELLOW}i586${RESET}             Only process i586"
+    echo -e "  ${YELLOW}i686${RESET}             Only process i686"
+    echo -e "  ${YELLOW}m68k${RESET}             Only process m68k"
+    echo -e "  ${YELLOW}mips${RESET}             Only process mips"
+    echo -e "  ${YELLOW}mipsel${RESET}           Only process mipsel"
+    echo -e "  ${YELLOW}powerpc${RESET}          Only process powerpc"
     echo -e "  ${YELLOW}powerpc-440fp${RESET}    Only process powerpc-440fp"
-    echo -e "  ${YELLOW}sh4${RESET}        Only process sh4"
-    echo -e "  ${YELLOW}sparc${RESET}      Only process sparc"
-    echo -e "  ${YELLOW}armv4l${RESET}     Only process armv4l"
-    echo -e "  ${YELLOW}armv5l${RESET}     Only process armv5l"
-    echo -e "  ${YELLOW}armv6l${RESET}     Only process armv6l"
-    echo -e "  ${YELLOW}armv7l${RESET}     Only process armv7l"
-    echo -e "  ${YELLOW}x86_64${RESET}     Only process x86_64"
-    echo -e "  ${YELLOW}arc${RESET}        Only process arc"
+    echo -e "  ${YELLOW}sh4${RESET}              Only process sh4"
+    echo -e "  ${YELLOW}sparc${RESET}            Only process sparc"
+    echo -e "  ${YELLOW}armv4l${RESET}           Only process armv4l"
+    echo -e "  ${YELLOW}armv5l${RESET}           Only process armv5l"
+    echo -e "  ${YELLOW}armv6l${RESET}           Only process armv6l"
+    echo -e "  ${YELLOW}armv7l${RESET}           Only process armv7l"
+    echo -e "  ${YELLOW}x86_64${RESET}           Only process x86_64"
+    echo -e "  ${YELLOW}arc${RESET}              Only process arc"
     echo
     echo -e "${BOLD}Examples:${RESET}"
     echo "  sudo $0 all"
@@ -79,35 +78,81 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Ensure bzip2 is installed
+if ! command -v bzip2 >/dev/null 2>&1; then
+    echo -e "${YELLOW}[*] bzip2 not found. Installing...${RESET}"
+    if apt-get update -qq >/dev/null 2>&1 && apt-get install -y -qq bzip2 >/dev/null 2>&1; then
+        echo -e "${GREEN}[+] bzip2 installed successfully.${RESET}"
+    else
+        echo -e "${RED}[!] Failed to install bzip2. Please install it manually and rerun the script.${RESET}"
+        exit 1
+    fi
+fi
+
 OUTDIR="/etc/xcompile"
 BASE_URL="https://mirailovers.io/HELL-ARCHIVE/COMPILERS"
 
-# Maps: short name -> [archive extraction rename]
-declare -A COMPILERS
-COMPILERS["i486"]="cross-compiler-i486.tar.gz   'tar -xvf cross-compiler-i486.tar.gz'        'mv cross-compiler-i486 i486'"
-COMPILERS["i586"]="cross-compiler-i586.tar.bz2  'tar -jxf cross-compiler-i586.tar.bz2'       'mv cross-compiler-i586 i586'"
-COMPILERS["i686"]="cross-compiler-i686.tar.bz2  'tar -jxf cross-compiler-i686.tar.bz2'       'mv cross-compiler-i686 i686'"
-COMPILERS["m68k"]="cross-compiler-m68k.tar.bz2  'tar -jxf cross-compiler-m68k.tar.bz2'       'mv cross-compiler-m68k m68k'"
-COMPILERS["mips"]="cross-compiler-mips.tar.bz2  'tar -jxf cross-compiler-mips.tar.bz2'       'mv cross-compiler-mips mips'"
-COMPILERS["mipsel"]="cross-compiler-mipsel.tar.bz2  'tar -jxf cross-compiler-mipsel.tar.bz2'  'mv cross-compiler-mipsel mipsel'"
-COMPILERS["powerpc"]="cross-compiler-powerpc.tar.bz2  'tar -jxf cross-compiler-powerpc.tar.bz2'  'mv cross-compiler-powerpc powerpc'"
-COMPILERS["powerpc-440fp"]="cross-compiler-powerpc-440fp.tar.bz2  'tar -jxf cross-compiler-powerpc-440fp.tar.bz2'  'mv cross-compiler-powerpc-440fp powerpc-440fp'"
-COMPILERS["sh4"]="cross-compiler-sh4.tar.bz2    'tar -jxf cross-compiler-sh4.tar.bz2'        'mv cross-compiler-sh4 sh4'"
-COMPILERS["sparc"]="cross-compiler-sparc.tar.bz2    'tar -jxf cross-compiler-sparc.tar.bz2'   'mv cross-compiler-sparc sparc'"
-COMPILERS["armv4l"]="cross-compiler-armv4l.tar.bz2    'tar -jxf cross-compiler-armv4l.tar.bz2' 'mv cross-compiler-armv4l armv4l'"
-COMPILERS["armv5l"]="cross-compiler-armv5l.tar.bz2    'tar -jxf cross-compiler-armv5l.tar.bz2' 'mv cross-compiler-armv5l armv5l'"
-COMPILERS["armv6l"]="cross-compiler-armv6l.tar.bz2    'tar -jxf cross-compiler-armv6l.tar.bz2' 'mv cross-compiler-armv6l armv6l'"
-COMPILERS["armv7l"]="cross-compiler-armv7l.tar.bz2    'tar -jxf cross-compiler-armv7l.tar.bz2' 'mv cross-compiler-armv7l armv7l'"
-COMPILERS["x86_64"]="cross-compiler-x86_64.tar.bz2    'tar -jxf cross-compiler-x86_64.tar.bz2' 'mv cross-compiler-x86_64 x86_64'"
-COMPILERS["arc"]="arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz   'tar -vxf arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz'   'mv arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install arc'"
+declare -A ARCHIVES
+ARCHIVES["i486"]="cross-compiler-i486.tar.gz"
+ARCHIVES["i586"]="cross-compiler-i586.tar.bz2"
+ARCHIVES["i686"]="cross-compiler-i686.tar.bz2"
+ARCHIVES["m68k"]="cross-compiler-m68k.tar.bz2"
+ARCHIVES["mips"]="cross-compiler-mips.tar.bz2"
+ARCHIVES["mipsel"]="cross-compiler-mipsel.tar.bz2"
+ARCHIVES["powerpc"]="cross-compiler-powerpc.tar.bz2"
+ARCHIVES["powerpc-440fp"]="cross-compiler-powerpc-440fp.tar.bz2"
+ARCHIVES["sh4"]="cross-compiler-sh4.tar.bz2"
+ARCHIVES["sparc"]="cross-compiler-sparc.tar.bz2"
+ARCHIVES["armv4l"]="cross-compiler-armv4l.tar.bz2"
+ARCHIVES["armv5l"]="cross-compiler-armv5l.tar.bz2"
+ARCHIVES["armv6l"]="cross-compiler-armv6l.tar.bz2"
+ARCHIVES["armv7l"]="cross-compiler-armv7l.tar.bz2"
+ARCHIVES["x86_64"]="cross-compiler-x86_64.tar.bz2"
+ARCHIVES["arc"]="arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz"
+
+declare -A EXTRACT
+EXTRACT["i486"]="tar -xvf cross-compiler-i486.tar.gz"
+EXTRACT["i586"]="tar -jxf cross-compiler-i586.tar.bz2"
+EXTRACT["i686"]="tar -jxf cross-compiler-i686.tar.bz2"
+EXTRACT["m68k"]="tar -jxf cross-compiler-m68k.tar.bz2"
+EXTRACT["mips"]="tar -jxf cross-compiler-mips.tar.bz2"
+EXTRACT["mipsel"]="tar -jxf cross-compiler-mipsel.tar.bz2"
+EXTRACT["powerpc"]="tar -jxf cross-compiler-powerpc.tar.bz2"
+EXTRACT["powerpc-440fp"]="tar -jxf cross-compiler-powerpc-440fp.tar.bz2"
+EXTRACT["sh4"]="tar -jxf cross-compiler-sh4.tar.bz2"
+EXTRACT["sparc"]="tar -jxf cross-compiler-sparc.tar.bz2"
+EXTRACT["armv4l"]="tar -jxf cross-compiler-armv4l.tar.bz2"
+EXTRACT["armv5l"]="tar -jxf cross-compiler-armv5l.tar.bz2"
+EXTRACT["armv6l"]="tar -jxf cross-compiler-armv6l.tar.bz2"
+EXTRACT["armv7l"]="tar -jxf cross-compiler-armv7l.tar.bz2"
+EXTRACT["x86_64"]="tar -jxf cross-compiler-x86_64.tar.bz2"
+EXTRACT["arc"]="tar -vxf arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz"
+
+declare -A RENAME
+RENAME["i486"]="mv cross-compiler-i486 i486"
+RENAME["i586"]="mv cross-compiler-i586 i586"
+RENAME["i686"]="mv cross-compiler-i686 i686"
+RENAME["m68k"]="mv cross-compiler-m68k m68k"
+RENAME["mips"]="mv cross-compiler-mips mips"
+RENAME["mipsel"]="mv cross-compiler-mipsel mipsel"
+RENAME["powerpc"]="mv cross-compiler-powerpc powerpc"
+RENAME["powerpc-440fp"]="mv cross-compiler-powerpc-440fp powerpc-440fp"
+RENAME["sh4"]="mv cross-compiler-sh4 sh4"
+RENAME["sparc"]="mv cross-compiler-sparc sparc"
+RENAME["armv4l"]="mv cross-compiler-armv4l armv4l"
+RENAME["armv5l"]="mv cross-compiler-armv5l armv5l"
+RENAME["armv6l"]="mv cross-compiler-armv6l armv6l"
+RENAME["armv7l"]="mv cross-compiler-armv7l armv7l"
+RENAME["x86_64"]="mv cross-compiler-x86_64 x86_64"
+RENAME["arc"]="mv arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install arc"
 
 # Build the list to process
 if [[ $# -eq 0 || "$1" == "all" ]]; then
-    TO_PROCESS=("${!COMPILERS[@]}")
+    TO_PROCESS=("${!ARCHIVES[@]}")
 else
     TO_PROCESS=()
     for arg in "$@"; do
-        if [[ -n "${COMPILERS[$arg]}" ]]; then
+        if [[ -n "${ARCHIVES[$arg]}" ]]; then
             TO_PROCESS+=("$arg")
         else
             echo -e "${RED}[!] Unknown compiler: $arg${RESET}"
@@ -124,7 +169,9 @@ cd "$OUTDIR"
 
 FAILED=()
 for key in "${TO_PROCESS[@]}"; do
-    IFS=" " read -r archive extract_cmd rename_cmd <<<"${COMPILERS[$key]}"
+    archive="${ARCHIVES[$key]}"
+    extract_cmd="${EXTRACT[$key]}"
+    rename_cmd="${RENAME[$key]}"
     echo -e "${BLUE}-------------------- ${BOLD}${key}${RESET}${BLUE} --------------------${RESET}"
     # Download
     if [[ -f "$archive" ]]; then
