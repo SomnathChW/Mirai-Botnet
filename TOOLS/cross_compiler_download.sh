@@ -117,7 +117,7 @@ ARCHIVES["x86_64"]="cross-compiler-x86_64.tar.bz2"
 ARCHIVES["arc"]="arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz"
 
 declare -A EXTRACT
-EXTRACT["i486"]="tar -xvf cross-compiler-i486.tar.gz"
+EXTRACT["i486"]="tar -xf cross-compiler-i486.tar.gz"
 EXTRACT["i586"]="tar -jxf cross-compiler-i586.tar.bz2"
 EXTRACT["i686"]="tar -jxf cross-compiler-i686.tar.bz2"
 EXTRACT["m68k"]="tar -jxf cross-compiler-m68k.tar.bz2"
