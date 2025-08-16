@@ -244,11 +244,13 @@ done
 if [[ ${#bin_paths[@]} -gt 0 ]]; then
     {
         echo "# xcompile cross-compiler paths BEGIN"
-        echo "export PATH=\"${bin_paths[*]}:\$PATH\""
+        # JOIN WITH COLON INSTEAD OF SPACE:
+        echo "export PATH=\"$(IFS=:; echo "${bin_paths[*]}"):\$PATH\""
         echo "# xcompile cross-compiler paths END"
     } >> "$USER_PROFILE"
-    echo -e "${GREEN}[+] PATH for these compilers has been permanently added to $USER_PROFILE${RESET}"
-    echo -e "${CYAN}[*] Please run ${BOLD}source $USER_PROFILE${RESET}${CYAN} or open a new shell to use the cross-compilers in your PATH.${RESET}"
+    echo -e "${GREEN}[+] PATH for these compilers has been permanently added to ${RESET}${BOLD}${YELLOW}$USER_PROFILE${RESET}"
+    echo -e "${CYAN}[*] Please run ${BOLD}${YELLOW}\`source $USER_PROFILE\`${RESET}${CYAN} or open a new shell to use the cross-compilers in your PATH.${RESET}"
+    echo
 fi
 
 # -------- TEST COMPILERS --------
