@@ -92,6 +92,12 @@ fi
 OUTDIR="/etc/xcompile"
 BASE_URL="https://mirailovers.io/HELL-ARCHIVE/COMPILERS"
 
+# If xcompile already exists, delete it and show a message
+if [ -d "$OUTDIR" ]; then
+    echo -e "${YELLOW}[!] Directory $OUTDIR already exists. Deleting it before proceeding...${RESET}"
+    rm -rf "$OUTDIR"
+fi
+
 declare -A ARCHIVES
 ARCHIVES["i486"]="cross-compiler-i486.tar.gz"
 ARCHIVES["i586"]="cross-compiler-i586.tar.bz2"
@@ -126,7 +132,7 @@ EXTRACT["armv5l"]="tar -jxf cross-compiler-armv5l.tar.bz2"
 EXTRACT["armv6l"]="tar -jxf cross-compiler-armv6l.tar.bz2"
 EXTRACT["armv7l"]="tar -jxf cross-compiler-armv7l.tar.bz2"
 EXTRACT["x86_64"]="tar -jxf cross-compiler-x86_64.tar.bz2"
-EXTRACT["arc"]="tar -vxf arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz"
+EXTRACT["arc"]="tar -xf arc_gnu_2017.09_prebuilt_uclibc_le_arc700_linux_install.tar.gz"
 
 declare -A RENAME
 RENAME["i486"]="mv cross-compiler-i486 i486"
@@ -167,12 +173,15 @@ echo -e "${CYAN}[*] Target directory:${RESET} ${YELLOW}$OUTDIR${RESET}"
 mkdir -p "$OUTDIR"
 cd "$OUTDIR"
 
+SUCCEEDED=()
 FAILED=()
+
 for key in "${TO_PROCESS[@]}"; do
     archive="${ARCHIVES[$key]}"
     extract_cmd="${EXTRACT[$key]}"
     rename_cmd="${RENAME[$key]}"
     echo -e "${BLUE}-------------------- ${BOLD}${key}${RESET}${BLUE} --------------------${RESET}"
+
     # Download
     if [[ -f "$archive" ]]; then
         echo -e "[${YELLOW}!${RESET}] ${archive} already exists, skipping download."
@@ -184,6 +193,7 @@ for key in "${TO_PROCESS[@]}"; do
             continue
         fi
     fi
+
     # Extract
     echo -e "[${CYAN}*${RESET}] Extracting ${YELLOW}${archive}${RESET}..."
     if ! eval "$extract_cmd"; then
@@ -191,12 +201,14 @@ for key in "${TO_PROCESS[@]}"; do
         FAILED+=("$key")
         continue
     fi
+
     # Rename
     src=$(echo "$rename_cmd" | awk '{print $2}')
     dst=$(echo "$rename_cmd" | awk '{print $3}')
     if [[ -d "$src" ]]; then
         echo -e "[${CYAN}*${RESET}] Renaming ${YELLOW}${src}${RESET} → ${YELLOW}${dst}${RESET}"
         eval "$rename_cmd"
+        SUCCEEDED+=("$key")
     else
         echo -e "[${YELLOW}!${RESET}] Directory ${src} not found, skipping rename."
         FAILED+=("$key")
@@ -209,16 +221,96 @@ rm -rf *.tar.bz2 *.tar.gz *.tar *.tar.xz 2>/dev/null || true
 echo -e "[${GREEN}+${RESET}] Archives removed."
 echo
 
-if [[ ${#FAILED[@]} -gt 0 ]]; then
-    echo -e "${RED}==================== FAILED ====================${RESET}"
-    for key in "${FAILED[@]}"; do
-        echo -e "${RED}[!] Failed to setup: ${BOLD}$key${RESET}"
+# -------- PERMANENT PATH SETUP (user only, successful compilers) --------
+
+USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+if [ -z "$USER_HOME" ]; then
+    # fallback (if not run under sudo)
+    USER_HOME="$HOME"
+fi
+USER_PROFILE="$USER_HOME/.bashrc"
+
+# Remove previous xcompile path entries
+sed -i '/# xcompile cross-compiler paths BEGIN/,/# xcompile cross-compiler paths END/d' "$USER_PROFILE" 2>/dev/null || true
+
+bin_paths=()
+for compiler in "${SUCCEEDED[@]}"; do
+    bin_dir="$OUTDIR/$compiler/bin"
+    if [[ -d "$bin_dir" ]]; then
+        bin_paths+=("$bin_dir")
+    fi
+done
+
+if [[ ${#bin_paths[@]} -gt 0 ]]; then
+    {
+        echo "# xcompile cross-compiler paths BEGIN"
+        echo "export PATH=\"${bin_paths[*]}:\$PATH\""
+        echo "# xcompile cross-compiler paths END"
+    } >> "$USER_PROFILE"
+    echo -e "${GREEN}[+] PATH for these compilers has been permanently added to $USER_PROFILE${RESET}"
+    echo -e "${CYAN}[*] Please run ${BOLD}source $USER_PROFILE${RESET}${CYAN} or open a new shell to use the cross-compilers in your PATH.${RESET}"
+fi
+
+# -------- TEST COMPILERS --------
+
+if [[ ${#SUCCEEDED[@]} -gt 0 ]]; then
+    echo -e "${CYAN}[*] Checking installed cross-compilers...${RESET}"
+    # For the session and subsequent checks, prepend each bin to PATH
+    for bin_dir in "${bin_paths[@]}"; do
+        PATH="$bin_dir:$PATH"
+    done
+
+    echo -e "${CYAN}==================== COMPILER TESTS ====================${RESET}"
+    for compiler in "${SUCCEEDED[@]}"; do
+        comp_bin="$OUTDIR/$compiler/bin"
+        if [[ -d "$comp_bin" ]]; then
+            cross_gcc="$(ls "$comp_bin"/*gcc 2>/dev/null | head -n 1)"
+            if [[ -x "$cross_gcc" ]]; then
+                if "$cross_gcc" --version >/dev/null 2>&1; then
+                    echo -e "[${GREEN}+${RESET}] ${BOLD}${compiler}${RESET}: gcc found and works (${YELLOW}$(basename "$cross_gcc")${RESET})"
+                else
+                    echo -e "[${RED}- ${RESET}] ${BOLD}${compiler}${RESET}: gcc found but failed to run"
+                fi
+            else
+                echo -e "[${RED}- ${RESET}] ${BOLD}${compiler}${RESET}: no gcc found in bin/"
+            fi
+        else
+            echo -e "[${RED}- ${RESET}] ${BOLD}${compiler}${RESET}: bin directory not found"
+        fi
     done
     echo
-    echo -e "${YELLOW}To retry a failed compiler, run:${RESET}"
+fi
+
+# -------- SUMMARY --------
+
+if [[ ${#SUCCEEDED[@]} -gt 0 && ${#FAILED[@]} -gt 0 ]]; then
+    echo -e "${YELLOW}==================== PARTIAL SUCCESS ====================${RESET}"
+    for key in "${TO_PROCESS[@]}"; do
+        if [[ " ${SUCCEEDED[*]} " == *" $key "* ]]; then
+            echo -e "${GREEN}[+] Succeeded:${RESET} ${BOLD}$key${RESET}"
+        elif [[ " ${FAILED[*]} " == *" $key "* ]]; then
+            echo -e "${RED}[-] Failed:   ${RESET} ${BOLD}$key${RESET}"
+        fi
+    done
+    echo
+    echo -e "${YELLOW}To retry failed compilers, run:${RESET}"
     echo -e "    sudo $0 ${FAILED[*]}"
     echo
-else
+elif [[ ${#FAILED[@]} -gt 0 ]]; then
+    echo -e "${RED}==================== FAILED ====================${RESET}"
+    for key in "${FAILED[@]}"; do
+        echo -e "${RED}[!] Failed:${RESET} ${BOLD}$key${RESET}"
+    done
+    echo
+    echo -e "${YELLOW}To retry failed compilers, run:${RESET}"
+    echo -e "    sudo $0 ${FAILED[*]}"
+    echo
+elif [[ ${#SUCCEEDED[@]} -gt 0 ]]; then
+    echo -e "${GREEN}==================== SUCCESS ====================${RESET}"
+    for key in "${SUCCEEDED[@]}"; do
+        echo -e "${GREEN}[+] Installed:${RESET} ${BOLD}$key${RESET}"
+    done
+    echo
     echo -e "${GREEN}[*] All selected cross-compilers are ready in ${GREEN}$OUTDIR${RESET}"
 fi
 
